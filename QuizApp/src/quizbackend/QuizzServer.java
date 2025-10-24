@@ -198,11 +198,22 @@ public class QuizzServer {
                         response.put("isAdmin", user.getIsAdmin());
                         response.put("message", "Login successful!");
                         System.out.println("✅ User logged in: " + username + " (Admin: " + user.getIsAdmin() + ")");
+                } else {
+                    // If the user does not exist, create (register) the user and log them in
+                    boolean created = UserDAO.addUser(new User(0, username, email, false));
+                    if (created) {
+                        response.put("success", true);
+                        response.put("username", username);
+                        response.put("email", email);
+                        response.put("isAdmin", false);
+                        response.put("message", "Account created successfully!");
+                        System.out.println("✅ User registered: " + username + " (Admin: false)");
                     } else {
                         response.put("success", false);
-                        response.put("message", "User not found. Please check your credentials.");
-                        System.out.println("❌ User not found: " + username);
+                        response.put("message", "Could not register user. Please try again.");
+                        System.out.println("❌ Failed to register user: " + username);
                     }
+                }
                 }
 
                 sendResponse(exchange, 200, response.toString());
