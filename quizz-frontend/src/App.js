@@ -1,13 +1,13 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
-// Pages (to be implemented)
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import QuizPage from "./pages/QuizPage";
 import ResultPage from "./pages/ResultPage";
 import AdminPage from "./pages/AdminPage";
 import Navbar from "./components/Navbar";
+import "./App.css";
 
 const getStoredUser = () => {
   try {
@@ -35,40 +35,38 @@ function App() {
   const user = getStoredUser();
   return (
     <Router>
-      <div className="min-h-screen bg-[#0D1117] text-[#E6E6E6]">
+      <div className="app-wrapper">
         <Navbar user={user} />
-        <div className="mx-auto max-w-5xl px-4 py-6">
-          <Routes>
-            <Route path="/" element={<Navigate to={user ? "/quiz" : "/login"} replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route
-              path="/quiz"
-              element={
-                <ProtectedRoute>
-                  <QuizPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/result"
-              element={
-                <ProtectedRoute>
-                  <ResultPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <AdminRoute>
-                  <AdminPage />
-                </AdminRoute>
-              }
-            />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
+        <Routes>
+          <Route path="/" element={<Navigate to={user ? "/quiz" : "/login"} replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route
+            path="/quiz"
+            element={
+              <ProtectedRoute>
+                <QuizPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/result"
+            element={
+              <ProtectedRoute>
+                <ResultPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminPage />
+              </AdminRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </div>
     </Router>
   );

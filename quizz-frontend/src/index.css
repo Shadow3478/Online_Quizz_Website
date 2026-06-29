@@ -1,9 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Google Fonts - loaded via CSS import */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;1,400&display=swap');
 
-body {
-  background-color: #0D1117;
-  color: #E6E6E6;
-  font-family: 'Inter', sans-serif;
-}
+/* Simple reset */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

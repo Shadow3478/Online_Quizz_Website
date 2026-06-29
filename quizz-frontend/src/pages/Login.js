@@ -12,6 +12,10 @@ export default function Login() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (!form.username.trim() || !form.email.trim()) {
+      setError("Please fill in all fields to continue.");
+      return;
+    }
     setError("");
     setLoading(true);
     try {
@@ -38,52 +42,71 @@ export default function Login() {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") onSubmit(e);
+  };
+
   return (
-    <div className="mx-auto mt-16 max-w-md">
-      <div className="rounded-2xl border border-white/10 bg-[#0F1520] p-6 shadow-xl">
-        <h1 className="mb-6 text-center text-2xl font-semibold text-teal-300">Login</h1>
+    <div className="login-wrapper">
+      <div className="login-card">
+        <h1 className="login-title">
+          Sign In
+          <span>Enter your details to begin</span>
+        </h1>
 
-        {error ? (
-          <div className="mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</div>
-        ) : null}
+        <div className="field">
+          <label htmlFor="input-username">Your Name</label>
+          <input
+            type="text"
+            id="input-username"
+            name="username"
+            value={form.username}
+            onChange={onChange}
+            onKeyDown={handleKeyDown}
+            placeholder="e.g. Arjun Sharma"
+            maxLength={40}
+            autoComplete="name"
+            spellCheck={false}
+          />
+        </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm text-gray-300">Username</label>
-            <input
-              name="username"
-              value={form.username}
-              onChange={onChange}
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white outline-none ring-0 transition placeholder:text-gray-400 focus:border-cyan-400/40"
-              placeholder="Enter username"
-              autoComplete="username"
-              required
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm text-gray-300">Email</label>
-            <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={onChange}
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white outline-none ring-0 transition placeholder:text-gray-400 focus:border-cyan-400/40"
-              placeholder="Enter email"
-              autoComplete="email"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-2 w-full rounded-md bg-teal-600 px-4 py-2 font-medium text-[#0D1117] transition hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
+        <div className="field">
+          <label htmlFor="input-email">Email</label>
+          <input
+            type="email"
+            id="input-email"
+            name="email"
+            value={form.email}
+            onChange={onChange}
+            onKeyDown={handleKeyDown}
+            placeholder="e.g. arjun@email.com"
+            autoComplete="email"
+          />
+        </div>
 
-        <p className="mt-4 text-center text-sm text-gray-400">
-          New here? <Link to="/signup" className="text-teal-300 hover:text-cyan-300">Create an account</Link>
+        <p className={`error-msg ${error ? "visible" : ""}`} role="alert" aria-live="polite">
+          {error}
+        </p>
+
+        <button
+          className="btn-signin"
+          type="button"
+          onClick={onSubmit}
+          disabled={loading}
+        >
+          {loading ? "Signing in..." : "Start Quiz →"}
+        </button>
+
+        {/* Decorative ruled lines */}
+        <div className="login-ruled-lines" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+        <div className="doodle-row" aria-hidden="true">
+          <span>✏️</span><span>📝</span><span>📖</span><span>🖊️</span>
+        </div>
+
+        <p className="login-footer-link">
+          New here? <Link to="/signup">Create an account</Link>
         </p>
       </div>
     </div>

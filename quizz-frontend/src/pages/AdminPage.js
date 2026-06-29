@@ -1,9 +1,16 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AdminTable from "../components/AdminTable";
 import Modal from "../components/Modal";
 
-const emptyForm = { question: "", option1: "", option2: "", option3: "", option4: "", answer: "" };
+const emptyForm = {
+  question: "",
+  option1: "",
+  option2: "",
+  option3: "",
+  option4: "",
+  answer: "",
+};
 
 export default function AdminPage() {
   const [questions, setQuestions] = useState([]);
@@ -85,18 +92,18 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-teal-300">Manage Questions</h1>
-        <button onClick={openAdd} className="rounded-md bg-teal-600 px-4 py-2 text-[#0D1117] transition hover:bg-teal-500">
-          Add Question
+    <div className="admin-wrapper">
+      <div className="admin-header">
+        <h1>📋 Manage Questions</h1>
+        <button className="btn-add" onClick={openAdd}>
+          + Add Question
         </button>
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-gray-300">Loading...</div>
+        <div className="quiz-loading">Loading questions…</div>
       ) : error ? (
-        <div className="rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</div>
+        <div className="quiz-error">{error}</div>
       ) : (
         <AdminTable questions={questions} onEdit={openEdit} onDelete={onDelete} />
       )}
@@ -104,57 +111,56 @@ export default function AdminPage() {
       <Modal
         open={modalOpen}
         onClose={() => !busy && setModalOpen(false)}
-        title={editing ? "Edit Question" : "Add Question"}
+        title={editing ? "✏️ Edit Question" : "📝 Add Question"}
         footer={
           <>
             <button
+              className="btn-cancel"
               onClick={() => !busy && setModalOpen(false)}
-              className="rounded-md border border-white/10 px-4 py-2 text-gray-300 hover:border-cyan-400/40 hover:text-cyan-300"
               disabled={busy}
             >
               Cancel
             </button>
-            <button
-              onClick={onSubmit}
-              className="rounded-md bg-teal-600 px-4 py-2 text-[#0D1117] transition hover:bg-teal-500 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={busy}
-            >
+            <button className="btn-save" onClick={onSubmit} disabled={busy}>
               {busy ? "Saving..." : "Save"}
             </button>
           </>
         }
       >
-        <form onSubmit={onSubmit} className="grid gap-4">
-          <div>
-            <label className="mb-1 block text-sm text-gray-300">Question</label>
+        <form onSubmit={onSubmit} style={{ display: "grid", gap: "1rem" }}>
+          <div className="field">
+            <label>Question</label>
             <input
               value={form.question}
               onChange={(e) => setForm({ ...form, question: e.target.value })}
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white outline-none focus:border-cyan-400/40"
               placeholder="Enter question"
               required
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {(["option1", "option2", "option3", "option4"]).map((key) => (
-              <div key={key}>
-                <label className="mb-1 block text-sm capitalize text-gray-300">{key}</label>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: ".75rem",
+            }}
+          >
+            {["option1", "option2", "option3", "option4"].map((key) => (
+              <div className="field" key={key}>
+                <label>{key.replace("option", "Option ")}</label>
                 <input
                   value={form[key]}
                   onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white outline-none focus:border-cyan-400/40"
-                  placeholder={`Enter ${key}`}
+                  placeholder={`Enter ${key.replace("option", "Option ")}`}
                   required
                 />
               </div>
             ))}
           </div>
-          <div>
-            <label className="mb-1 block text-sm text-gray-300">Correct Answer (must match an option)</label>
+          <div className="field">
+            <label>Correct Answer (must match an option)</label>
             <input
               value={form.answer}
               onChange={(e) => setForm({ ...form, answer: e.target.value })}
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-white outline-none focus:border-cyan-400/40"
               placeholder="Exact correct answer"
               required
             />

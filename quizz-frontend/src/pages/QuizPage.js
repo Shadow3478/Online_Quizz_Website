@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import axios from "axios";
 import QuestionCard from "../components/QuestionCard";
 import { useNavigate } from "react-router-dom";
@@ -19,8 +19,9 @@ export default function QuizPage() {
   const [error, setError] = useState("");
   const [answers, setAnswers] = useState({});
   const [current, setCurrent] = useState(0);
+  const startTimeRef = useRef(Date.now());
 
-  const total = 20;
+  const total = 10;
 
   useEffect(() => {
     let mounted = true;
@@ -31,7 +32,10 @@ export default function QuizPage() {
         const res = await axios.get("http://localhost:8080/questions");
         const all = res.data || [];
         const randomized = shuffle(all).slice(0, Math.min(total, all.length));
-        if (mounted) setQuestions(randomized);
+        if (mounted) {
+          setQuestions(randomized);
+          startTimeRef.current = Date.now();
+        }
       } catch (e) {
         setError("Failed to load questions");
       } finally {
@@ -43,56 +47,117 @@ export default function QuizPage() {
     };
   }, []);
 
+  const answeredCount = Object.keys(answers).length;
+
   const progress = useMemo(() => {
-    const answered = Object.keys(answers).length;
-    return Math.round((answered / Math.max(questions.length, 1)) * 100);
-  }, [answers, questions.length]);
+    return Math.round(((current + 1) / Math.max(questions.length, 1)) * 100);
+  }, [current, questions.length]);
 
   const onSelect = (index, choiceKey) => {
     setAnswers((prev) => ({ ...prev, [index]: choiceKey }));
   };
 
   const onSubmit = () => {
+    // Warn if unanswered questions remain
+    const unanswered = questions.length - answeredCount;
+    if (unanswered > 0) {
+      const msg =
+        unanswered === 1
+          ? "You have 1 unanswered question. Submit anyway?"
+          : `You have ${unanswered} unanswered questions. Submit anyway?`;
+      if (!window.confirm(msg)) return;
+    }
+
+    // Calculate results with breakdown
+    const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
     let score = 0;
-    questions.forEach((q, i) => {
-      const chosen = answers[i];
+    const breakdown = questions.map((q, i) => {
+      const chosenKey = answers[i] || null;
+      const chosenLabel = chosenKey ? q[chosenKey] : null;
       const correctKey = ["option1", "option2", "option3", "option4"].find(
         (k) => q[k] === q.answer
       );
-      if (chosen && correctKey && chosen === correctKey) score += 1;
+      const isCorrect = chosenKey && correctKey && chosenKey === correctKey;
+      if (isCorrect) score += 1;
+      return {
+        question: q.question,
+        selected: chosenLabel,
+        correctAnswer: q.answer,
+        isCorrect: !!isCorrect,
+      };
     });
 
-    const percent = questions.length ? Math.round((score / questions.length) * 100) : 0;
+    const percent = questions.length
+      ? Math.round((score / questions.length) * 100)
+      : 0;
 
     navigate("/result", {
-      state: { score, total: questions.length, percent },
+      state: {
+        score,
+        total: questions.length,
+        percent,
+        timeTaken: elapsed,
+        breakdown,
+        username:
+          JSON.parse(localStorage.getItem("prashnottari_user") || "{}")
+            .username || "Student",
+      },
       replace: true,
     });
   };
 
   if (loading) {
-    return <div className="py-24 text-center text-gray-300">Loading questions...</div>;
+    return (
+      <div className="quiz-wrapper">
+        <div className="quiz-loading">📝 Loading questions…</div>
+      </div>
+    );
   }
   if (error) {
     return (
-      <div className="mx-auto mt-16 max-w-lg rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-center text-red-300">
-        {error}
+      <div className="quiz-wrapper">
+        <div className="quiz-error">{error}</div>
       </div>
     );
   }
   if (!questions.length) {
-    return <div className="py-24 text-center text-gray-300">No questions available.</div>;
+    return (
+      <div className="quiz-wrapper">
+        <div className="quiz-loading">No questions available.</div>
+      </div>
+    );
   }
 
   const q = questions[current];
+  const isFirst = current === 0;
+  const isLast = current === questions.length - 1;
 
   return (
-    <div className="space-y-6">
-      <div className="h-2 w-full overflow-hidden rounded bg-white/10">
-        <div className="h-full bg-gradient-to-r from-teal-400 to-cyan-400" style={{ width: `${progress}%` }} />
+    <div className="quiz-wrapper">
+      {/* Progress Bar */}
+      <div className="progress-bar-wrap" aria-label="Progress">
+        <div className="progress-meta">
+          <span className="progress-text" aria-live="polite">
+            Question {current + 1} of {questions.length}
+          </span>
+          <span className="q-counter" aria-live="polite">
+            {answeredCount}/{questions.length} answered
+          </span>
+        </div>
+        <div
+          className="progress-track"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progress}
+        >
+          <div className="progress-fill" style={{ width: `${progress}%` }} />
+        </div>
       </div>
 
+      {/* Question Card */}
       <QuestionCard
+        key={current}
         index={current}
         total={questions.length}
         question={q}
@@ -100,30 +165,36 @@ export default function QuizPage() {
         onSelect={(key) => onSelect(current, key)}
       />
 
-      <div className="flex items-center justify-between">
+      {/* Navigation */}
+      <nav className="quiz-nav" aria-label="Question navigation">
         <button
+          className="btn-nav btn-prev"
           onClick={() => setCurrent((c) => Math.max(0, c - 1))}
-          disabled={current === 0}
-          className="rounded-md border border-white/10 px-4 py-2 text-sm text-gray-300 transition hover:border-cyan-400/40 hover:text-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isFirst}
+          aria-label="Previous question"
         >
-          Previous
+          ← Previous
         </button>
-        {current < questions.length - 1 ? (
+        {!isLast ? (
           <button
-            onClick={() => setCurrent((c) => Math.min(questions.length - 1, c + 1))}
-            className="rounded-md bg-teal-600 px-4 py-2 text-sm font-medium text-[#0D1117] transition hover:bg-teal-500"
+            className="btn-nav btn-next"
+            onClick={() =>
+              setCurrent((c) => Math.min(questions.length - 1, c + 1))
+            }
+            aria-label="Next question"
           >
-            Next
+            Next →
           </button>
         ) : (
           <button
+            className="btn-nav btn-submit"
             onClick={onSubmit}
-            className="rounded-md bg-cyan-500 px-4 py-2 text-sm font-medium text-[#0D1117] transition hover:bg-cyan-400"
+            aria-label="Submit quiz"
           >
-            Submit
+            Submit Quiz ✓
           </button>
         )}
-      </div>
+      </nav>
     </div>
   );
 }

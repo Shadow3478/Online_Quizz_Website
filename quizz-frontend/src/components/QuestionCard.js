@@ -1,6 +1,7 @@
 import React from "react";
 
 export default function QuestionCard({ index, total, question, selected, onSelect }) {
+  // Build options array from the backend data shape
   const options = [
     { key: "option1", label: question.option1 },
     { key: "option2", label: question.option2 },
@@ -9,34 +10,41 @@ export default function QuestionCard({ index, total, question, selected, onSelec
   ];
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#0F1520] p-5 shadow-lg">
-      <div className="mb-3 flex items-center justify-between text-sm text-gray-300/80">
-        <span>
-          Question <span className="font-semibold text-teal-300">{index + 1}</span> / {total}
-        </span>
+    <div className="question-card">
+      {/* Notebook hole-punch decoration */}
+      <div className="holes" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
       </div>
-      <h2 className="mb-4 text-lg font-medium text-white">{question.question}</h2>
-      <div className="grid gap-3">
-        {options.map((opt, i) => {
-          const isActive = selected === opt.key;
-          return (
-            <button
-              key={opt.key}
-              onClick={() => onSelect(opt.key)}
-              className={
-                "w-full rounded-lg border px-4 py-3 text-left transition " +
-                (isActive
-                  ? "border-teal-400 bg-teal-500/20 text-teal-200"
-                  : "border-white/10 bg-white/5 hover:border-cyan-400/40 hover:bg-white/10")
-              }
-            >
-              <span className="mr-2 inline-block rounded-full border border-teal-400/50 px-2 py-0.5 text-xs text-teal-300">
-                {String.fromCharCode(65 + i)}
-              </span>
-              {opt.label}
-            </button>
-          );
-        })}
+
+      <div className="card-body">
+        <span className="category-badge">
+          Question {index + 1}
+        </span>
+
+        <p className="question-text fade-in" key={index} aria-live="polite" aria-atomic="true">
+          {question.question}
+        </p>
+
+        {/* Options */}
+        <div className="options-grid" role="group" aria-label="Answer choices">
+          {options.map((opt, i) => {
+            const isSelected = selected === opt.key;
+            return (
+              <button
+                key={opt.key}
+                className={`option-btn slide-in ${isSelected ? "selected" : ""}`}
+                style={{ animationDelay: `${i * 60}ms` }}
+                onClick={() => onSelect(opt.key)}
+                aria-label={`Option ${String.fromCharCode(65 + i)}: ${opt.label}`}
+              >
+                <span className="option-label">
+                  {String.fromCharCode(65 + i)}
+                </span>
+                <span className="option-text">{opt.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
